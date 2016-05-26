@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" >
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" >
+        <title>������Ȳ� ��ڷ��Է</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=10, user-scalable=yes"/>
+
+        <link rel="stylesheet" type="text/css" href="/extjs/packages/ext-theme-crisp-touch/build/resources/ext-theme-crisp-touch-all.css" />
+        <script type="text/javascript" src="/extjs/ext-all.js"></script>
+        <script type="text/javascript" src="/extjs/common.js"></script>
+        <link rel="stylesheet" type="text/css" href="/extjs/css/new2015.css">
+
+    </head>
+
+<script>
+
+ 
+
+/* 
+ * °����� λ���ϱ ��� ��ڵ��� ��Ƴ�����̶ 󺸸 �ȴ..
+ * ��ϴ�� ��Ű ó���� ��Ͽ� wiseman���� ���Ǵ �ҽ��� �Ϻ ΰ���Դ..
+ */
+
+var theme;  
+var select_tree_id = "";  
+var select_tree_record = null;  
+
+
+
+//--------------------------- ��ϴ�� ��� �߰..............................
+//-------- �з�ü� ��ȸ/�߰�/���/��� ��� �Ȯ�...........................
+
+var lastPath = getCookie( 'CLS_TREE'  );
+
+function reload_tree() {
+    tree.getStore().load();
+    var path = getCookie( 'CLS_TREE'  );
+    tree.expandPath( lastPath );
+    tree.selectPath( lastPath );
+
+}
+
+var tree_store = Ext.create('Ext.data.TreeStore', {
+		fields: ['text','id','order', 'OBJECT_ID','CLASSIFICATION_CODE' ],
+		proxy:{type:'ajax',url: '/Process.aspx?action=GetList',reader:{type:'json',root: 'links' }, extraParams: { 'PATH' : lastPath, 'fullload' : this.fullload , 'type': this.targettype, 'checked' : this.checked, 'displayvalue' : this.displayvalue,'displaycode' : this.displaycode,'displaysort' : this.displaysort } },
+		root:{text:this.rootTitle,id:this.rootID, order:'0'},
+		folderSort: true,
+		sorters: [{property: 'order',direction: 'ASC'}]
+	});
+
+function action_cls_insert( btn,text )
+{
+    if( btn == 'ok' )
+    {
+        if( text == null || text == '' ) { alert('��Է�� Ȯ��� ��ֽʽÿ'); return; }
+
+        if( select_tree_record == null )
+        {
+            var record = tree.getRootNode().findChild('id',select_tree_id,true);
+            select_tree_record = record.data;
+        }
+
+        Ext.Ajax.request({
+            url:'/Process.aspx?action=ClsIns',
+            params: { 'OBJECT_ID' : select_tree_record.OBJECT_ID , 'CATE_NAME' : text },
+	        method:'GET',
+	        success:function( result, request ){
+                var jsonData = Ext.JSON.decode(result.responseText);
+                var res = jsonData.RESULT;
+	            if( res == 'true' )
+                {
+                    alert('�����Ͽ���ϴ.');
+                    reload_tree();
+                }else{
+                    alert('ٽ����Ͽ���ϴ.');
+                }
+            },
+	        failure:function(result,request){
+	            alert( 'ٽ����Ͽ���ϴ. ٰ� �Ȯ��� ��ֽʽÿ.' );
+            }
+        });
+        return;
+    }
+}
+function action_cls_delete ( btn )
+{
+    if( btn == 'yes' )  
+    {
+        if( select_tree_record == null )
+        {
+            var record = tree.getRootNode().findChild('id',select_tree_id,true);
+            select_tree_record = record.data;
+        }
+
+        Ext.Ajax.request({
+            url:'/Process.aspx?action=ClsDel',
+            params: { 'OBJECT_ID' : select_tree_record.OBJECT_ID },
+	        method:'GET',
+	        success:function( result, request ){
+                var jsonData = Ext.JSON.decode(result.responseText);
+                var res = jsonData.RESULT;
+	            if( res == 'true' )
+                {
+                    alert('�����Ͽ���ϴ.');
+                    reload_tree();
+                }else{
+                    alert('ٽ����Ͽ���ϴ.');
+                }
+            },
+	        failure:function(result,request){
+	            alert( 'ٽ����Ͽ���ϴ. ٰ� �Ȯ��� ��ֽʽÿ.' );
+            }
+        });
+    }
+}
+function action_cls_modify( btn, text )
+{
+    if( btn == 'ok' )
+    {
+        if( text == null || text == '' ) { alert('��Է�� Ȯ��� ��ֽʽÿ'); return; }
+
+        if( select_tree_record == null )
+        {
+            var record = tree.getRootNode().findChild('id',select_tree_id,true);
+            select_tree_record = record.data;
+        }
+
+        Ext.Ajax.request({
+            url:'/Process.aspx?action=ClsMod',
+            params: { 'OBJECT_ID' : select_tree_record.OBJECT_ID , 'CATE_NAME' : text },
+	        method:'GET',
+	        success:function( result, request ){
+                var jsonData = Ext.JSON.decode(result.responseText);
+                var res = jsonData.RESULT;
+	            if( res == 'true' )
+                {
+                    alert('�����Ͽ���ϴ.');
+                    reload_tree();
+                }else{
+                    alert('ٽ����Ͽ���ϴ.');
+                }
+            },
+	        failure:function(result,request){
+	            alert( 'ٽ����Ͽ���ϴ. ٰ� �Ȯ��� ��ֽʽÿ.' );
+            }
+        });
+        return;
+    }
+}   
+
+var initComplete = false;
+
+var tree = new Ext.tree.TreePanel({ 
+		//layout: 'anchor', <-- ��ɷ ��ϸ 齺ũ�ѹٰ�.. �.̤
+		animate: false,
+		border : false,
+		rootVisible: false,
+        //collapsible: true,
+		frame: false,
+        scrollable: true,
+        region: 'center',
+		store : tree_store,
+        
+        tbar  : new Ext.Toolbar({
+            cls:'top-toolbar',
+            items:[,{
+                text:'Add',
+                tooltip: 'Expand All',
+                handler: function(){ 
+                    if( select_tree_id != null ){
+                        Ext.MessageBox.prompt('�Ȯ�', 'νű Ժз ��Ī� �Է����ֽʽÿ', action_cls_insert );
+                    } }
+                },{
+                text:'Mod',
+                tooltip: 'Expand All',
+                handler: function(){ 
+                    if( select_tree_id != null ){
+                        Ext.MessageBox.prompt('�Ȯ�', 'κ��� ɺз ��Ī� �Է����ֽʽÿ', action_cls_modify );
+                    } }
+                },{
+                text:'Del',
+                tooltip: 'Expand All',
+                handler: function(){ 
+                    if( select_tree_id != null ){
+                        Ext.MessageBox.confirm('�Ȯ�', '��ش �з ��� �Ͻðڽ�ϱ?', action_cls_delete );
+                    } }
+                }
+            ]
+        }),
+        autoHeight:true,
+        anchor:'100% 100%',
+        viewConfig: {
+            stripeRows: true,
+            forceFit: true,
+            style : { overflow: 'auto' }
+        }
+	});  
+
+    var saveCookie = function( record ){
+		var oids = record.getPath();
+
+		setCookieLT( 'CLS_TREE', oids, 604800, '/');
+	}
+
+    tree.on( 'itemclick', function( obj , record, item ) { select_tree_id = record.data.id; select_tree_record = record.data; saveCookie( record ); reloadList( record.data.CLASSIFICATION_CODE ) }, this );
+    
+//------------------------------------------------------
+
+
+function renderNormal( value )
+{
+    //return '<div style="white-space:normal; !important;">' + value + ' </div>';
+    //Ext.util.Format.numberRenderer(value,'0.000');
+return value;
+}
+
+Ext.util.Format.thousandSeparator = ',';
+Ext.util.Format.decimalSeparator = '.';
+
+function renderNumber( value )
+{
+    if( value == null ) return '';
+    try{
+	if( value.indexOf( '.' ) >= 0 )
+	    return Ext.util.Format.number(value, '0,000.00');
+	return Ext.util.Format.number(value, '0,000');
+    }catch(e){
+	return value;
+    }
+}
+ 
+
+Ext.define('OBJECT', {
+        extend: 'Ext.data.Model',
+        fields: [
+{name: 'OBJECT_ID', type: 'integer'},
+{name: 'No'},
+{name: 'UNIT'},
+{name: 'INPUT_TYPE'},
+{name: 'TITLE'},
+{name: 'CODE'},
+{name: 'INPUT_CYCLE'},{name: 'INPUT_CYCLE2'},
+{name: 'DIVISION'},
+{name: 'YEAR'},{name: 'MONTH'},
+{name: 'YEAR_VALUE'},{name: 'VALUE_HALF_01'},{name: 'VALUE_HALF_02'},
+{name: 'VAL_QTR_01'},{name: 'VAL_QTR_02'},{name: 'VAL_QTR_03'},{name: 'VAL_QTR_04'},
+{name: 'VAL_MONTH_01'},{name: 'VAL_MONTH_02'},{name: 'VAL_MONTH_03'},{name: 'VAL_MONTH_04'},{name: 'VAL_MONTH_05'},{name: 'VAL_MONTH_06'},
+{name: 'VAL_MONTH_07'},{name: 'VAL_MONTH_08'},{name: 'VAL_MONTH_09'},{name: 'VAL_MONTH_10'},{name: 'VAL_MONTH_11'},{name: 'VAL_MONTH_12'},
+{name: 'VAL_WEEK_01'},{name: 'VAL_WEEK_02'},{name: 'VAL_WEEK_03'},{name: 'VAL_WEEK_04'},{name: 'VAL_WEEK_05'},
+{name: 'VAL_DAY_01'},{name: 'VAL_DAY_02'},{name: 'VAL_DAY_03'},{name: 'VAL_DAY_04'},{name: 'VAL_DAY_05'},{name: 'VAL_DAY_06'},{name: 'VAL_DAY_07'},{name: 'VAL_DAY_08'},{name: 'VAL_DAY_09'},{name: 'VAL_DAY_10'},
+{name: 'VAL_DAY_11'},{name: 'VAL_DAY_12'},{name: 'VAL_DAY_13'},{name: 'VAL_DAY_14'},{name: 'VAL_DAY_15'},{name: 'VAL_DAY_16'},{name: 'VAL_DAY_17'},{name: 'VAL_DAY_18'},{name: 'VAL_DAY_19'},{name: 'VAL_DAY_20'},
+{name: 'VAL_DAY_21'},{name: 'VAL_DAY_22'},{name: 'VAL_DAY_23'},{name: 'VAL_DAY_24'},{name: 'VAL_DAY_25'},{name: 'VAL_DAY_26'},{name: 'VAL_DAY_27'},{name: 'VAL_DAY_28'},{name: 'VAL_DAY_29'},{name: 'VAL_DAY_30'},{name: 'VAL_DAY_31'},
+{name: 'ATTR1', type:'bool' },{name: 'ATTR2', type:'bool' },{name: 'ATTR3'},{name: 'ATTR4', type:'bool' }
+        ]
+    });
+
+function getDefaultOBJECT(){
+    return Ext.create('OBJECT', { 'OBJECT_ID' : '', 'No':'', 'YEAR':'2016' });
+}
+
+var store = Ext.create('Ext.data.Store', {
+        model: 'OBJECT',
+		proxy:{ type:'ajax',url: '/Process.aspx?action=GetOBJList',
+                reader:'json'
+        },
+        autoLoad: true,
+	});
+
+
+var cellEditing = Ext.create('Ext.grid.plugin.CellEditing', {
+        clicksToEdit: 1
+    });
+
+// �⺻ ��Ʈ� ´��� �.. STORE, COMBO, RENDERER
+//---- ٻ��............
+var STORE_DIV = Ext.create( 'Ext.data.Store', { fields: ['view','value'],
+                proxy:{type:'ajax',url: '/Process.aspx?action=getcodelist&code=code4',reader:{type:'json', root: 'users' }  }
+//	data: [ { 'view': 'ΰ��',  'value': 'C' },
+//	        { 'view': '�ö�',  'value': 'R' },
+//	        { 'view': '��߱',  'value': 'T' },
+//	        { 'view': '��÷�Ʈ','value': 'P' }
+//    ]
+});
+STORE_DIV.load( { callback: store_callback } );
+var COMBO_DIV = new Ext.form.field.ComboBox({
+                displayField: 'view',
+                valueField: 'value',
+                queryMode: 'local',
+                typeAhead: true,
+                forceSelection:true,
+                triggerAction: 'all',
+                selectOnTab: true,
+                store: STORE_DIV,
+                lazyRender: true,
+                allowBlank : false,
+                listClass: 'x-combo-list-small'
+            });
+function renderDIV( value )
+{
+    index = STORE_DIV.findExact('value',value); 
+    if (index != -1){
+        return STORE_DIV.getAt(index).data.view; 
+    }
+    return value;
+}
+
+// �Է��ֱ.....
+var STORE_CYCLE = Ext.create( 'Ext.data.Store', { fields: ['view','value'],
+    proxy:{type:'ajax',url: '/Process.aspx?action=getcodelist&code=code3',reader:{type:'json', root: 'users' }  }
+//	data: [ { 'view': '�Ⱓ',  'value': '1' },
+//	        { 'view': '�ݱ',  'value': '2' },
+//	        { 'view': '�б',  'value': '3' },
+//            { 'view': '�',  'value': '4' },
+//            { 'view': '��ְ�',  'value': '5' },
+//	        { 'view': '�ϰ�',  'value': '6' }
+//	         ]
+});
+STORE_CYCLE.load( { callback: store_callback } );
+
+var COMBO_CYCLE = new Ext.form.field.ComboBox({
+                displayField: 'view',
+                valueField: 'value',
+                queryMode: 'local',
+                typeAhead: true,
+                forceSelection:true,
+                triggerAction: 'all',
+                selectOnTab: true,
+                store: STORE_CYCLE,
+                lazyRender: true,
+                allowBlank : false,
+                listClass: 'x-combo-list-small'
+            });
+function renderCYCLE( value )
+{
+    index = STORE_CYCLE.findExact('value',value); 
+    if (index != -1){
+        return STORE_CYCLE.getAt(index).data.view; 
+    }
+    return value;
+}
+
+//
+
+// �Է��ֱ2..
+var STORE_CYCLE2 = Ext.create( 'Ext.data.Store', { fields: ['view','value'],
+    proxy:{type:'ajax',url: '/Process.aspx?action=getcodelist&code=code3',reader:{type:'json', root: 'users' }  }
+    });
+STORE_CYCLE2.load( { callback: store_callback } );
+
+var COMBO_CYCLE2 = new Ext.form.field.ComboBox({
+                displayField: 'view',
+                valueField: 'value',
+                queryMode: 'local',
+                typeAhead: true,
+                forceSelection:true,
+                triggerAction: 'all',
+                selectOnTab: true,
+                store: STORE_CYCLE2,
+                lazyRender: true,
+                allowBlank : false,
+                listClass: 'x-combo-list-small'
+            });
+function renderCYCLE2( value )
+{
+    index = STORE_CYCLE2.findExact('value',value); 
+    if (index != -1){
+        return STORE_CYCLE2.getAt(index).data.view; 
+    }
+    return value;
+}
+
+
+
+// ��Է���.....
+var STORE_INPUT = Ext.create( 'Ext.data.Store', { fields: ['view','value'],
+    //autoLoad: true,      
+    proxy:{type:'ajax',url: '/Process.aspx?action=getcodelist&code=code1',reader:{type:'json', root: 'users' }  }
+
+//	data: [ { 'view': '��ȹ',  'value': 'P' },
+//	        { 'view': '���',  'value': 'S' }
+//	         ]
+});
+
+STORE_INPUT.load( { callback: store_callback } );
+
+
+
+
+var COMBO_INPUT = new Ext.form.field.ComboBox({
+                displayField: 'view',
+                valueField: 'value',
+                queryMode: 'local',
+                typeAhead: true,
+                forceSelection:true,
+                triggerAction: 'all',
+                selectOnTab: true,
+                store: STORE_INPUT,
+                //lazyRender: true,
+                //allowBlank : false,
+                listClass: 'x-combo-list-small'
+            });
+function renderINPUT( value )
+{
+    index = STORE_INPUT.findExact('value',value); 
+    if (index != -1){
+        return STORE_INPUT.getAt(index).data.view; 
+    }
+    return value;
+}
+
+
+// �μ����
+var STORE_DEPT = Ext.create( 'Ext.data.Store', { fields: ['view','value'],
+    //autoLoad: true,      
+    proxy:{type:'ajax',url: '/Process.aspx?action=getcodelist&code=dept',reader:{type:'json', root: 'users' }  }
+});
+
+STORE_DEPT.load( { callback: store_callback } );
+
+var COMBO_DEPT = new Ext.form.field.ComboBox({
+                displayField: 'view',
+                valueField: 'value',
+                queryMode: 'local',
+                typeAhead: true,
+                triggerAction: 'all',
+                selectOnTab: true,
+                forceSelection:true,
+                store: STORE_DEPT,
+                //lazyRender: true,
+                allowBlank : false,
+                listClass: 'x-combo-list-small'
+            });
+function renderDEPT( value )
+{
+    index = STORE_DEPT.findExact('value',value); 
+    if (index != -1){
+        return STORE_DEPT.getAt(index).data.view; 
+    }
+    return value;
+}
+//
+
+// ��Է���.....
+var STORE_UNIT= Ext.create( 'Ext.data.Store', { fields: ['view','value'],
+    proxy:{type:'ajax',url: '/Process.aspx?action=getcodelist&code=code2',reader:{type:'json', root: 'users' }  }
+//	data: [ { 'view': '�',  'value': '1' },
+//            { 'view': '�',  'value': '2' },
+//            { 'view': '%',  '   value': '3' },
+//	        { 'view': '�',  'value': '4' }
+//	         ]
+});
+STORE_UNIT.load( { callback: store_callback } );
+
+var COMBO_UNIT = new Ext.form.field.ComboBox({
+                displayField: 'view',
+                valueField: 'value',
+                queryMode: 'local',
+                typeAhead: true,
+                triggerAction: 'all',
+                selectOnTab: true,
+                store: STORE_UNIT,
+                lazyRender: true,
+                allowBlank : false,
+                listClass: 'x-combo-list-small'
+            });
+function renderUNIT( value )
+{
+    index = STORE_UNIT.findExact('value',value); 
+    if (index != -1){
+        return STORE_UNIT.getAt(index).data.view; 
+    }
+    return value;
+}
+
+var grid;
+ 
+Ext.onReady(function(){
+isTouchTheme = Ext.themeName === 'crisp-touch';
+
+
+    var grid_toolbar;
+
+    grid = Ext.create('Ext.grid.Panel', {
+        //title: 'ǰ��׸',
+        store: store,
+        columnLines: true,
+        enableColumnMove : false,
+        plugins: [cellEditing],
+        columns: { 
+            defaults: { menuDisabled:true , autoRender : true,  sortable : true, 
+                       align : 'center', style: 'text-align:center', renderer : renderNormal },
+            items: 
+        [{
+/*            text     : '�',
+            locked   : true,
+            width    : 30,
+            sortable : false,
+//sortable:false // menu shows but no sort options
+//hideable:false // menu shows but column name not shown in columns menu
+            dataIndex: 'No'
+        },
+        { */
+            text     : '���Ī',
+            locked   : true,
+            width    : 200,
+            align    : 'left',
+            dataIndex: 'TITLE',
+            editor: {
+                allowBlank: false
+            }
+        },
+        {
+            text     : '��',
+            locked   : true,
+            width    : 40,
+            align    : 'left',
+            renderer : renderINPUT,
+            dataIndex: 'INPUT_TYPE',
+            editor: COMBO_INPUT
+        },
+        {
+            text     : '���ǥID',
+            width    : 80,
+            dataIndex: 'CODE',
+            editor: {
+                allowBlank: false
+            }
+        },
+        {
+            text     : '���',
+            width    : 60,
+            renderer : renderDIV,
+            dataIndex: 'DIVISION',
+            editor: COMBO_DIV
+        },
+        {
+            text     : '��ְ�μ�',
+            width    : 150,
+            align    : 'left',
+            renderer : renderDEPT,
+            dataIndex: 'OWNER',
+            editor: COMBO_DEPT
+        },
+        {
+            text: '�����',
+            columns: [
+                { 
+                    xtype: 'checkcolumn', 
+                    text     : 'һ���', width    : 80, dataIndex: 'ATTR1' },
+                { 
+                    xtype: 'checkcolumn', 
+                    text     : 'ǻ繫�',width    : 80, dataIndex: 'ATTR2'  },
+            ]
+        },
+        {
+            text     : 'Ǵ��',
+            locked   : true,
+            width    : 80,
+            align    : 'center',
+            renderer : renderUNIT,
+            dataIndex: 'UNIT',
+            editor: COMBO_UNIT
+        },
+        {
+            text: '�Է��ֱ',
+            columns: [
+                {id       : 'COL_INPUT_CYCLE1',text: '��ǥ',align:'center',width    : 60,dataIndex: 'INPUT_CYCLE',renderer : renderCYCLE, dataIndex: 'INPUT_CYCLE', editor: COMBO_CYCLE },
+                {id       : 'COL_INPUT_CYCLE2',text: '���',align:'center',width    : 60,dataIndex: 'INPUT_CYCLE2',renderer : renderCYCLE2, dataIndex: 'INPUT_CYCLE2', editor: COMBO_CYCLE2 },
+            ]
+        },
+        {
+                text     : '���س',
+                width    : 80,
+                dataIndex: 'YEAR',
+                align    : 'right',
+                editor: {
+                    allowBlank: false
+                }
+        },
+        {
+                text     : '���ؿ',
+                width    : 80,
+                dataIndex: 'MONTH',
+                align    : 'right',
+                editor: {
+                    allowBlank: false
+                }
+        },
+
+        {
+            text: '�Ⱓ',
+            columns: [
+                {id       : 'COL_YEAR_Y',text     : '���س',width    : 80,dataIndex: 'YEAR',align    : 'right',editor: {allowBlank: false}},
+                {text     : '��ǥ/���',id       : 'COL_YEAR_1',width    : 60,dataIndex: 'VAL_YEAR_01', align:'right',renderer: renderNumber, editor: {allowBlank: false}}
+            ]
+        },
+/*        {
+            text: '�ݱ',
+            columns: [
+                {id       : 'COL_HALF_Y',text     : '���س',width    : 80,dataIndex: 'YEAR',align    : 'right',editor: {allowBlank: false}},
+                {id       : 'COL_HALF_1',text     : '��ݱ',width    : 60,align    : 'right',dataIndex: 'VALUE_HALF_01',editor: {allowBlank: false}}, 
+                {id       : 'COL_HALF_2',text     : '��ݱ',width    : 60,align    : 'right',dataIndex: 'VALUE_HALF_02',editor: {allowBlank: false}}
+            ]
+        },
+*/
+/*        {
+            text: '�б',
+            columns: [
+                {id       : 'COL_QTR_Y',text     : '���س',width    : 80,dataIndex: 'YEAR',align    : 'right',editor: {allowBlank: false}},
+                {id       : 'COL_QTR_1',text     : '1�б',width    : 60,align    : 'right',dataIndex: 'VAL_QTR_01',editor: {allowBlank: false}}, 
+                {id       : 'COL_QTR_2',text     : '2�б',width    : 60,align    : 'right',dataIndex: 'VAL_QTR_02',editor: {allowBlank: false}}, 
+                {id       : 'COL_QTR_3',text     : '3�б',width    : 60,align    : 'right',dataIndex: 'VAL_QTR_03',editor: {allowBlank: false}}, 
+                {id       : 'COL_QTR_4',text     : '4�б',width    : 60,align    : 'right',dataIndex: 'VAL_QTR_04',editor: {allowBlank: false}}
+            ]
+        },
+*/
+{
+            text: '�',
+            columns: [
+//                {id       : 'COL_MONTH_Y' ,text     : '���س',width    : 80,dataIndex: 'YEAR',align    : 'right',editor: {allowBlank: false}},
+                {id       : 'COL_MONTH_1' ,text     : '1�'   ,width    : 60,align    : 'right',renderer: renderNumber, dataIndex: 'VAL_MONTH_01' ,editor: {allowBlank: false}},
+                {id       : 'COL_MONTH_2' ,text     : '2�'   ,width    : 60,align    : 'right',renderer: renderNumber, dataIndex: 'VAL_MONTH_02' ,editor: {allowBlank: false}},
+                {id       : 'COL_MONTH_3' ,text     : '3�'   ,width    : 60,align    : 'right',renderer: renderNumber, dataIndex: 'VAL_MONTH_03' ,editor: {allowBlank: false}},
+                {id       : 'COL_MONTH_4' ,text     : '4�'   ,width    : 60,align    : 'right',renderer: renderNumber, dataIndex: 'VAL_MONTH_04' ,editor: {allowBlank: false}},
+                {id       : 'COL_MONTH_5' ,text     : '5�'   ,width    : 60,align    : 'right',renderer: renderNumber, dataIndex: 'VAL_MONTH_05' ,editor: {allowBlank: false}},
+                {id       : 'COL_MONTH_6' ,text     : '6�'   ,width    : 60,align    : 'right',renderer: renderNumber, dataIndex: 'VAL_MONTH_06' ,editor: {allowBlank: false}},
+                {id       : 'COL_MONTH_7' ,text     : '7�'   ,width    : 60,align    : 'right',renderer: renderNumber, dataIndex: 'VAL_MONTH_07' ,editor: {allowBlank: false}},
+                {id       : 'COL_MONTH_8' ,text     : '8�'   ,width    : 60,align    : 'right',renderer: renderNumber, dataIndex: 'VAL_MONTH_08' ,editor: {allowBlank: false}},
+                {id       : 'COL_MONTH_9' ,text     : '9�'   ,width    : 60,align    : 'right',renderer: renderNumber, dataIndex: 'VAL_MONTH_09' ,editor: {allowBlank: false}},
+                {id       : 'COL_MONTH_10',text     : '10�'  ,width    : 60,align    : 'right',renderer: renderNumber, dataIndex: 'VAL_MONTH_10',editor: {allowBlank: false}},
+                {id       : 'COL_MONTH_11',text     : '11�'  ,width    : 60,align    : 'right',renderer: renderNumber, dataIndex: 'VAL_MONTH_11',editor: {allowBlank: false}},
+                {id       : 'COL_MONTH_12',text     : '12�'  ,width    : 60,align    : 'right',renderer: renderNumber, dataIndex: 'VAL_MONTH_12',editor: {allowBlank: false}}
+            ]
+        },{
+            text: '��ְ�',
+            columns: [
+                {id       : 'COL_WEEK_Y',text     : '���س',width    : 80,align    : 'right',dataIndex: 'YEAR',        editor: {allowBlank: false}},
+                {id       : 'COL_WEEK_M',text     : '���ؿ',width    : 80,align    : 'right',dataIndex: 'MONTH',       editor: {allowBlank: false}},
+                {id       : 'COL_WEEK_1',text     : '1����' ,width    : 60,align    : 'right',renderer: renderNumber, dataIndex: 'VAL_WEEK_01',editor: {allowBlank: false}}, 
+                {id       : 'COL_WEEK_2',text     : '2����' ,width    : 60,align    : 'right',renderer: renderNumber, dataIndex: 'VAL_WEEK_02',editor: {allowBlank: false}}, 
+                {id       : 'COL_WEEK_3',text     : '3����' ,width    : 60,align    : 'right',renderer: renderNumber, dataIndex: 'VAL_WEEK_03',editor: {allowBlank: false}}, 
+                {id       : 'COL_WEEK_4',text     : '4����' ,width    : 60,align    : 'right',renderer: renderNumber, dataIndex: 'VAL_WEEK_04',editor: {allowBlank: false}}, 
+                {id       : 'COL_WEEK_5',text     : '5����' ,width    : 60,align    : 'right',renderer: renderNumber, dataIndex: 'VAL_WEEK_05',editor: {allowBlank: false}}
+            ]
+        },
+/*
+,{
+            text: '��ϰ�',
+            columns: [
+            {id       : 'COL_DAY_Y',    text     : '���س',width    : 80,dataIndex: 'YEAR' ,align    : 'right',editor: {allowBlank: false}},
+            {id       : 'COL_DAY_M',    text     : '���ؿ',width    : 80,dataIndex: 'MONTH',align    : 'right',editor: {allowBlank: false}},
+            {id       : 'COL_DAY_1',    text     : '1',     width    : 60,align    : 'right',dataIndex: 'VAL_DAY_01' ,editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_2',    text     : '2',     width    : 60,align    : 'right',dataIndex: 'VAL_DAY_02' ,editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_3',    text     : '3',	    width    : 60,align    : 'right',dataIndex: 'VAL_DAY_03' ,editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_4',    text     : '4',     width    : 60,align    : 'right',dataIndex: 'VAL_DAY_04' ,editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_5',    text     : '5',     width    : 60,align    : 'right',dataIndex: 'VAL_DAY_05' ,editor: {allowBlank: false}},
+            {id       : 'COL_DAY_6',    text     : '6',     width    : 60,align    : 'right',dataIndex: 'VAL_DAY_06' ,editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_7',    text     : '7',     width    : 60,align    : 'right',dataIndex: 'VAL_DAY_07' ,editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_8',    text     : '8',     width    : 60,align    : 'right',dataIndex: 'VAL_DAY_08' ,editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_9',    text     : '9',     width    : 60,align    : 'right',dataIndex: 'VAL_DAY_09' ,editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_10',   text     : '10',    width    : 60,align    : 'right',dataIndex: 'VAL_DAY_10',editor: {allowBlank: false}},
+            {id       : 'COL_DAY_11',   text     : '11',    width    : 60,align    : 'right',dataIndex: 'VAL_DAY_11',editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_12',   text     : '12',    width    : 60,align    : 'right',dataIndex: 'VAL_DAY_12',editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_13',	text     : '13',    width    : 60,align    : 'right',dataIndex: 'VAL_DAY_13',editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_14',   text     : '14',    width    : 60,align    : 'right',dataIndex: 'VAL_DAY_14',editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_15',   text     : '15',    width    : 60,align    : 'right',dataIndex: 'VAL_DAY_15',editor: {allowBlank: false}},
+            {id       : 'COL_DAY_16',   text     : '16',    width    : 60,align    : 'right',dataIndex: 'VAL_DAY_16',editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_17',   text     : '17',    width    : 60,align    : 'right',dataIndex: 'VAL_DAY_17',editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_18',	text     : '18',    width    : 60,align    : 'right',dataIndex: 'VAL_DAY_18',editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_19',	text     : '19',	width    : 60,align    : 'right',dataIndex: 'VAL_DAY_19',editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_20',   text     : '20',	width    : 60,align    : 'right',dataIndex: 'VAL_DAY_20',editor: {allowBlank: false}},
+            {id       : 'COL_DAY_21',   text     : '21',	width    : 60,align    : 'right',dataIndex: 'VAL_DAY_21',editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_22',   text     : '22',	width    : 60,align    : 'right',dataIndex: 'VAL_DAY_22',editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_23',   text     : '23',	width    : 60,align    : 'right',dataIndex: 'VAL_DAY_23',editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_24',   text     : '24',	width    : 60,align    : 'right',dataIndex: 'VAL_DAY_24',editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_25',   text     : '25',	width    : 60,align    : 'right',dataIndex: 'VAL_DAY_25',editor: {allowBlank: false}},
+            {id       : 'COL_DAY_26',   text     : '26',	width    : 60,align    : 'right',dataIndex: 'VAL_DAY_26',editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_27',   text     : '27',    width    : 60,align    : 'right',dataIndex: 'VAL_DAY_27',editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_28',   text     : '28',    width    : 60,align    : 'right',dataIndex: 'VAL_DAY_28',editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_29',   text     : '29',    width    : 60,align    : 'right',dataIndex: 'VAL_DAY_29',editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_30',   text     : '30',    width    : 60,align    : 'right',dataIndex: 'VAL_DAY_30',editor: {allowBlank: false}}, 
+            {id       : 'COL_DAY_31',   text     : '31',    width    : 60,align    : 'right',dataIndex: 'VAL_DAY_31',editor: { allowBlank: false  } }
+            ]
+        }
+*/
+        
+        {
+            text     : '��߰��Ӽ�',
+            width    : 80,
+            dataIndex: 'ATTR3',
+            editor: {
+                allowBlank: false
+            }
+        }
+
+        ] },
+        tbar  : grid_toolbar = new Ext.Toolbar({
+            cls:'top-toolbar',
+            items:[ '->' ,{
+/*                    xtype : 'combo',
+                    id: 'ID_FILTERCOMBO1',
+                    width: 80,
+                    queryMode:'local',
+                    displayField: 'view',
+                    valueField: 'value',
+                    store: STORE_DIV,
+                },{
+                    xtype : 'combo',
+                    id: 'ID_FILTERCOMBO2',
+                    width: 80,
+                    queryMode:'local',
+                    displayField: 'view',
+                    valueField: 'value',
+                    store: STORE_CYCLE,
+                },{
+                    xtype : 'textfield',
+                    id: 'ID_FILTERTEXT',
+                    width: 100,
+                },{
+                text:'�˻',
+                handler: function(){ 
+                    if( select_tree_id != null ){
+                        //----------
+                    } }
+                },{
+                text:'��߰�',
+//iconCls: 'print' ,
+                tooltip: 'Expand All',
+                handler: function(){ 
+                    //changeView( grid, "YEAR" );
+                    var r = getDefaultOBJECT();
+                    store.add( r ); // insert( 0, r ) � ��ϴϱ.. ��ѹ �ǰ ����ķ ERROR..
+                } },{
+                text:'λ��',
+                tooltip: 'Expand All',
+                handler: function(){ 
+                    if( select_tree_id != null ){
+                        Ext.MessageBox.prompt('Ȯ�', 'κ��� ɺз ��Ī� �Է����ֽʽÿ', action_cls_modify );
+                    } }
+                },{ */
+
+                text:'��߰�',
+                tooltip: 'Expand All',
+                handler: function(){ 
+                    //changeView( grid, "YEAR" );
+                    var r = getDefaultOBJECT();
+                    store.add( r ); // insert( 0, r ) � ��ϴϱ.. ��ѹ �ǰ ����ķ ERROR..
+                } },{
+                text:'λ��',
+                tooltip: 'Expand All',
+                handler: function(){ 
+                    removeGRID( grid, store );
+                } },{
+                text:'���',
+                tooltip: 'Expand All',
+                handler: function(){ 
+                    saveGRID( grid, store );
+                    }
+                }
+            ]
+        }),
+        autoHeight:true,
+        region: 'center',
+        viewConfig: {
+            stripeRows: true,
+            forceFit: true
+        }
+    });
+
+
+grid.on( 'rowdblclick', function( target, record, tr, rowIndex, e, opts ){
+    var projectcode = record.data.PrjCode;
+    var object_id = record.data.Object_Id;
+    this.location = URL_DETAIL + "&PRJCODE=" + projectcode + "&ObjectId=" + object_id;;
+}, self );
+
+
+
+grid.on('edit', function(editor, e, eOpts ) {
+    var field = e.field;
+    var value = e.value;
+
+    if( field != null && field.indexOf( 'VAL_' ) >= 0 ){
+        if( e.value.indexOf( ',' ) >= 0 ){
+            e.record.data[field] = e.value.replace(/,/gi,"" );
+            grid.getView().refresh();
+        }
+    }
+});
+
+grid.on('validateedit', function(editor, e, eOpts ) {
+    var field = e.field;
+    var value = e.value;
+
+//e.record.data[field] = "11111";
+//debugger;
+//grid.getView().refresh();
+//e.cancel=true;
+//return false;
+
+
+    if( field == 'YEAR' )
+    {
+        var v1 = parseInt( e.value );
+        if( v1 != e.value ){
+            alert( '���ڸ� �Է����ֽʽÿ.');
+            e.cancel = true; return;
+        }
+        if( v1 < 2016 || v1 > 2100 ){
+            alert( '��Էµ Ȱ�� Ȯ�����ֽʽÿ.');
+            e.cancel = true; return;
+        }
+    }
+    if( field == 'MONTH' )
+    {
+        var v1 = parseInt( e.value );
+        if( v1 != e.value ){
+            alert( '���ڸ� �Է����ֽʽÿ.');
+            e.cancel = true; return;
+        }
+        if( v1 < 1 || v1 > 12 ){
+            alert( '��Էµ Ȱ�� Ȯ�����ֽʽÿ.');
+            e.cancel = true; return;
+        }
+    }
+});
+
+var targetcall = 0;
+var callback = 0;
+var callmsg = '';
+
+function removeGRID( grid, store ){
+    var record = grid.getSelectionModel().getSelected();
+    if( record == null ){
+        alert('���� ����� ��ֽʽÿ.' );
+        return;
+    }
+    if( record.length != 1 ) {
+        alert('���� 1���� ����� ��ֽʽÿ.' );
+        return;
+    }
+    
+    var msg = record.items[0].data.TITLE;
+    var callmsg = '';
+    if( confirm( '��� �׸�� ��� �Ͻðڽ�ϱ?\r\n' + msg ) )
+    {
+        var url = '/Process.aspx?action=ObjDel&OBJECT_ID=' + record.items[0].data.OBJECT_ID;
+        Ext.Ajax.request({
+            url:url,
+            //params: { 'OBJECT_ID' : record.data },
+            jsonData : record.data,
+            method:'POST',
+            success:function( result, request ){
+                var jsonData = Ext.JSON.decode(result.responseText);
+                var res = jsonData.RESULT;
+                if( res == 'true' )
+                {
+                    callmsg += "\r\n�:[" + msg + "]";
+                }else{
+                    callmsg += "\r\n���:[" + msg + "]";
+                }
+                
+                alert( "��۾�� �Ϸ ��Ͽ���ϴ." + callmsg );
+                reloadList( select_tree_id );
+            },
+            failure:function(result,request){
+                callmsg += "\r\nٽ��:[" + msg + "]";
+                alert( "��۾�� �Ϸ ��Ͽ���ϴ." + callmsg );
+                reloadList( select_tree_id );
+            }
+        });
+    }
+}
+  
+
+
+function saveGRID( grid, store ){
+    var items = grid.store.data.items;
+    var msg = '';
+    var cnt = 0;
+    for( var i = 0; i < items.length; i++ ){
+        var record = items[i];
+        if( record.dirty ){
+            msg += "\r\n[" + record.data.TITLE + "]";
+            cnt++;
+        }
+    }
+    if( confirm( 'ٴ��� ��׸�� ����Ʈ �Ͻðڽ�ϱ?' + msg ) )
+    {
+        var success = '';
+        var failure = '';
+        var current = '';
+        targetcall = cnt;
+        callback = 0;
+        callmsg = '';
+
+        for( var i = 0; i < items.length; i++ ){
+            var record = items[i];
+            current= record.data.TITLE;
+            if( record.dirty ){
+                url = '/Process.aspx?action=ObjMod';
+                if( record.data.OBJECT_ID == 0 || record.data.OBJECT_ID == '' )
+                {
+                    url = '/Process.aspx?action=ObjIns&CATE_PCODE=' + tree.getRootNode().findChild('id',select_tree_id,true ).data.OBJECT_ID;
+                }
+                Ext.Ajax.request({
+                    url:url,
+                    //params: { 'OBJECT_ID' : record.data },
+                    jsonData : record.data,
+                    method:'POST',
+                    success:function( result, request ){
+                        callback++;
+                        var jsonData = Ext.JSON.decode(result.responseText);
+                        var res = jsonData.RESULT;
+                        if( res == 'true' )
+                        {
+                            callmsg += "\r\n�:[" + request.jsonData.TITLE  + "]";
+                        }else{
+                            callmsg += "\r\n���:[" + request.jsonData.TITLE + "]";
+                        }
+                        if( callback == targetcall )
+                        {
+                            alert( "��۾�� �Ϸ ��Ͽ���ϴ." + callmsg );
+                            reloadList( select_tree_id );
+                        }
+                    },
+                    failure:function(result,request){
+                        callback++;
+                        callmsg += "\r\nٽ��:[" + request.jsonData.TITLE + "]";
+                        if( callback == targetcall )
+                        {
+                            alert( "��۾�� �Ϸ ��Ͽ���ϴ." + callmsg );
+                            reloadList( select_tree_id );
+                        }
+                    }
+                });
+            }
+        }
+    } 
+}
+
+function changeView( grid, mode ){
+    var m = grid.columnManager;
+    return;
+    if( mode == "YEAR" )
+    {
+        m.getHeaderById( "COL_YEAR_Y" ).setHidden( false );
+        m.getHeaderById( "COL_YEAR_1" ).setHidden( false );
+    }else
+    {
+        m.getHeaderById( "COL_YEAR_Y" ).setHidden( true );
+        m.getHeaderById( "COL_YEAR_1" ).setHidden( true );
+    }
+    if( mode == "HALF" )
+    {
+        m.getHeaderById( "COL_HALF_Y" ).setHidden( false );
+        m.getHeaderById( "COL_HALF_1" ).setHidden( false );
+        m.getHeaderById( "COL_HALF_2" ).setHidden( false );
+    }else
+    {
+        m.getHeaderById( "COL_HALF_Y" ).setHidden( true );
+        m.getHeaderById( "COL_HALF_1" ).setHidden( true );
+        m.getHeaderById( "COL_HALF_2" ).setHidden( true );
+    }
+
+    if( mode == "QTR" )
+    {
+        m.getHeaderById( "COL_QTR_Y" ).setHidden( false );
+        m.getHeaderById( "COL_QTR_1" ).setHidden( false );
+        m.getHeaderById( "COL_QTR_2" ).setHidden( false );
+        m.getHeaderById( "COL_QTR_3" ).setHidden( false );
+        m.getHeaderById( "COL_QTR_4" ).setHidden( false );
+    }else
+    {
+        m.getHeaderById( "COL_QTR_Y" ).setHidden( true );
+        m.getHeaderById( "COL_QTR_1" ).setHidden( true );
+        m.getHeaderById( "COL_QTR_2" ).setHidden( true );
+        m.getHeaderById( "COL_QTR_3" ).setHidden( true );
+        m.getHeaderById( "COL_QTR_4" ).setHidden( true );
+    }
+
+    if( mode == "MONTH" )
+    {
+        m.getHeaderById( "COL_MONTH_Y" ).setHidden( false );
+        m.getHeaderById( "COL_MONTH_1" ).setHidden( false );
+        m.getHeaderById( "COL_MONTH_2" ).setHidden( false );
+        m.getHeaderById( "COL_MONTH_3" ).setHidden( false );
+        m.getHeaderById( "COL_MONTH_4" ).setHidden( false );
+        m.getHeaderById( "COL_MONTH_5" ).setHidden( false );
+        m.getHeaderById( "COL_MONTH_6" ).setHidden( false );
+        m.getHeaderById( "COL_MONTH_7" ).setHidden( false );
+        m.getHeaderById( "COL_MONTH_8" ).setHidden( false );
+        m.getHeaderById( "COL_MONTH_9" ).setHidden( false );
+        m.getHeaderById( "COL_MONTH_10" ).setHidden( false );
+        m.getHeaderById( "COL_MONTH_11" ).setHidden( false );
+        m.getHeaderById( "COL_MONTH_12" ).setHidden( false );
+    }else
+    {
+        m.getHeaderById( "COL_MONTH_Y" ).setHidden( true );
+        m.getHeaderById( "COL_MONTH_1" ).setHidden( true );
+        m.getHeaderById( "COL_MONTH_2" ).setHidden( true );
+        m.getHeaderById( "COL_MONTH_3" ).setHidden( true );
+        m.getHeaderById( "COL_MONTH_4" ).setHidden( true );
+        m.getHeaderById( "COL_MONTH_5" ).setHidden( true );
+        m.getHeaderById( "COL_MONTH_6" ).setHidden( true );
+        m.getHeaderById( "COL_MONTH_7" ).setHidden( true );
+        m.getHeaderById( "COL_MONTH_8" ).setHidden( true );
+        m.getHeaderById( "COL_MONTH_9" ).setHidden( true );
+        m.getHeaderById( "COL_MONTH_10" ).setHidden( true );
+        m.getHeaderById( "COL_MONTH_11" ).setHidden( true );
+        m.getHeaderById( "COL_MONTH_12" ).setHidden( true );
+    }
+
+
+    if( mode == "WEEK" )
+    {
+        m.getHeaderById( "COL_WEEK_Y" ).setHidden( false );
+        m.getHeaderById( "COL_WEEK_M" ).setHidden( false );
+        m.getHeaderById( "COL_WEEK_1" ).setHidden( false );
+        m.getHeaderById( "COL_WEEK_2" ).setHidden( false );
+        m.getHeaderById( "COL_WEEK_3" ).setHidden( false );
+        m.getHeaderById( "COL_WEEK_4" ).setHidden( false );
+        m.getHeaderById( "COL_WEEK_5" ).setHidden( false );
+    }else
+    {
+        m.getHeaderById( "COL_WEEK_Y" ).setHidden( true );
+        m.getHeaderById( "COL_WEEK_M" ).setHidden( true );
+        m.getHeaderById( "COL_WEEK_1" ).setHidden( true );
+        m.getHeaderById( "COL_WEEK_2" ).setHidden( true );
+        m.getHeaderById( "COL_WEEK_3" ).setHidden( true );
+        m.getHeaderById( "COL_WEEK_4" ).setHidden( true );
+        m.getHeaderById( "COL_WEEK_5" ).setHidden( true );
+    }
+
+
+    if( mode == "DAY" )
+    {
+        m.getHeaderById( "COL_DAY_Y" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_M" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_1" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_2" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_3" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_4" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_5" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_6" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_7" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_8" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_9" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_10" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_11" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_12" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_13" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_14" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_15" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_16" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_17" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_18" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_19" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_20" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_21" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_22" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_23" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_24" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_25" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_26" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_27" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_28" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_29" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_30" ).setHidden( false );
+        m.getHeaderById( "COL_DAY_31" ).setHidden( false );
+    }else
+    {
+        m.getHeaderById( "COL_DAY_Y" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_M" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_1" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_2" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_3" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_4" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_5" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_6" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_7" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_8" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_9" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_10" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_11" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_12" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_13" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_14" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_15" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_16" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_17" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_18" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_19" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_20" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_21" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_22" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_23" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_24" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_25" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_26" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_27" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_28" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_29" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_30" ).setHidden( true );
+        m.getHeaderById( "COL_DAY_31" ).setHidden( true );
+    }
+    grid.getView().refresh();
+}
+
+
+var anchor = 
+Ext.create('Ext.container.Viewport', {
+    layout: 'border',
+    items: [{
+        region: 'north',
+        html: '<h1 class="x-panel-header"> &nbsp; &nbsp; &nbsp; ���� ���Ȳ� ǰ</h1>',
+        border: false,
+        margin: '0 0 5 0'
+    }, 
+{
+        region: 'west',
+        collapsible: true,
+        title: '�з',
+        width: 250,
+        items: [
+            tree
+        ]
+    }
+
+ , grid ]
+});
+
+
+
+    tree.expandPath( lastPath, afterExpand() );
+    tree.selectPath( lastPath );
+    select_tree_id = lastPath.substring( lastPath.lastIndexOf( "/" ) + 1);
+
+    reloadList( select_tree_id );
+    setTreeHeight();
+});
+
+// �Ʈ�� Ȯ�����.. Ĵ��� �� ̵���� ͷε �ó��..
+function afterExpand()
+{
+//alert('1');
+    var record = tree.getRootNode().findChild('id',select_tree_id,true);
+    if( record == null ) return;
+    select_tree_record = record.data;
+    reloadList( record.clsCode );
+}
+
+function reloadList( clsCode )
+{
+    store.load( { params:{ 'clscode': clsCode  }  } );
+    //grid.headerCt.items.items[0].setWidth(100);
+    //this.getView().refresh();
+}
+
+function store_callback(){
+//alert( select_tree_id );
+    //reloadList( select_tree_id )
+    grid.getView().refresh();
+}
+
+function setTreeHeight(){
+	tree.setHeight( document.body.clientHeight - 100 );
+}
+
+
+window.onresize = function(){
+	setTreeHeight();
+}
+
+</script>
+
+
+<style type="text/css">
+ 
+.rept{
+    margin-bottom:10px;
+}
+.x-form-layout-wrap
+{
+        border-spacing: 0px;
+}
+
+.x-grid-cell-inner
+{
+        padding-bottom : 7px;
+        padding-top : 8px;
+}
+
+DIV.TITLE{
+
+padding-top : 25px;
+}
+</style>
+    <body style="width:100%">
+    </body>
+</html>

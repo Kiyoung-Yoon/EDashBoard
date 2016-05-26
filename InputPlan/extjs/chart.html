@@ -1,0 +1,30 @@
+ 
+ 
+<script language="JavaScript" src="../common/scripts/FusionCharts.js"></script>
+
+
+
+</head>
+<body>
+<form name="topRightForm">
+<table width="100%" align="center">
+     
+  <table class="DB_list" width="100%" align="center">
+	<tr> 
+		<td valign="top" class="text" align="center"> 
+			<div id="chartdiv" align="center"> 
+				FusionCharts. 
+			</div>
+			
+		</td>
+	</tr>
+  </table>
+</form>  
+</body>
+</html>
+
+			<script type="text/javascript">
+var chart = new FusionCharts("../common/images/FCF_MSColumn3D.swf", "ChartId", eval(document.body.clientWidth * 0.9), "220", "0", "1");
+chart.setDataURL("/enovia/components/rtpDashboardPJTMainEO_Xml.jsp");		   
+chart.render("chartdiv");
+			</script>			

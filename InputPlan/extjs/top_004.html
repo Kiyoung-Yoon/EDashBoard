@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" >
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" >
+        <title>2015년도 프로젝트 수행현황</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=10, user-scalable=yes"/>
+
+        <link rel="stylesheet" type="text/css" href="/extjs/packages/ext-theme-crisp-touch/build/resources/ext-theme-crisp-touch-all.css" />
+        <script type="text/javascript" src="/extjs/ext-all.js"></script>
+        <script type="text/javascript" src="/extjs/common.js"></script>
+        <link rel="stylesheet" type="text/css" href="/extjs/css/new2015.css">
+
+    </head>
+
+<script>
+
+ 
+
+/* 
+ * 공통으로 사용하기 위한 코드들을 모아놓은곳이라 보면 된다..
+ * 일단은 쿠키 처리를 위하여 wiseman에서 사용되던 소스를 일부 가져왔다..
+ */
+
+var theme;  
+var select_tree_id = "";  
+var select_tree_record = null;  
+
+
+
+//--------------------------- 일단은 선을 긋고..............................
+//-------- 분류체계 조회/추가/삭제/변경 까지 확인...........................
+
+var lastPath = getCookie( 'CLS_TREE'  );
+
+function reload_tree() {
+    tree.getStore().load();
+    var path = getCookie( 'CLS_TREE'  );
+    tree.expandPath( lastPath );
+    tree.selectPath( lastPath );
+
+}
+
+var tree_store = Ext.create('Ext.data.TreeStore', {
+		fields: ['text','id','order', 'OBJECT_ID' ],
+		proxy:{type:'ajax',url: '/Process.aspx?action=GetList',reader:{type:'json',root: 'links' }, extraParams: { 'PATH' : lastPath, 'fullload' : this.fullload , 'type': this.targettype, 'checked' : this.checked, 'displayvalue' : this.displayvalue,'displaycode' : this.displaycode,'displaysort' : this.displaysort } },
+		root:{text:this.rootTitle,id:this.rootID, order:'0'},
+		folderSort: true,
+		sorters: [{property: 'order',direction: 'ASC'}]
+	});
+
+function action_cls_insert( btn,text )
+{
+    if( btn == 'ok' )
+    {
+        if( text == null || text == '' ) { alert('입력을 확인해 주십시오'); return; }
+
+        if( select_tree_record == null )
+        {
+            var record = tree.getRootNode().findChild('id',select_tree_id,true);
+            select_tree_record = record.data;
+        }
+
+        Ext.Ajax.request({
+            url:'/Process.aspx?action=ClsIns',
+            params: { 'OBJECT_ID' : select_tree_record.OBJECT_ID , 'CATE_NAME' : text },
+	        method:'GET',
+	        success:function( result, request ){
+                var jsonData = Ext.JSON.decode(result.responseText);
+                var res = jsonData.RESULT;
+	            if( res == 'true' )
+                {
+                    alert('성공하였습니다.');
+                    reload_tree();
+                }else{
+                    alert('실패하였습니다.');
+                }
+            },
+	        failure:function(result,request){
+	            alert( '실패하였습니다. 결과를 확인해 주십시오.' );
+            }
+        });
+        return;
+    }
+}
+function action_cls_delete ( btn )
+{
+    if( btn == 'yes' )  
+    {
+        if( select_tree_record == null )
+        {
+            var record = tree.getRootNode().findChild('id',select_tree_id,true);
+            select_tree_record = record.data;
+        }
+
+        Ext.Ajax.request({
+            url:'/Process.aspx?action=ClsDel',
+            params: { 'OBJECT_ID' : select_tree_record.OBJECT_ID },
+	        method:'GET',
+	        success:function( result, request ){
+                var jsonData = Ext.JSON.decode(result.responseText);
+                var res = jsonData.RESULT;
+	            if( res == 'true' )
+                {
+                    alert('성공하였습니다.');
+                    reload_tree();
+                }else{
+                    alert('실패하였습니다.');
+                }
+            },
+	        failure:function(result,request){
+	            alert( '실패하였습니다. 결과를 확인해 주십시오.' );
+            }
+        });
+    }
+}
+function action_cls_modify( btn, text )
+{
+    if( btn == 'ok' )
+    {
+        if( text == null || text == '' ) { alert('입력을 확인해 주십시오'); return; }
+
+        if( select_tree_record == null )
+        {
+            var record = tree.getRootNode().findChild('id',select_tree_id,true);
+            select_tree_record = record.data;
+        }
+
+        Ext.Ajax.request({
+            url:'/Process.aspx?action=ClsMod',
+            params: { 'OBJECT_ID' : select_tree_record.OBJECT_ID , 'CATE_NAME' : text },
+	        method:'GET',
+	        success:function( result, request ){
+                var jsonData = Ext.JSON.decode(result.responseText);
+                var res = jsonData.RESULT;
+	            if( res == 'true' )
+                {
+                    alert('성공하였습니다.');
+                    reload_tree();
+                }else{
+                    alert('실패하였습니다.');
+                }
+            },
+	        failure:function(result,request){
+	            alert( '실패하였습니다. 결과를 확인해 주십시오.' );
+            }
+        });
+        return;
+    }
+}   
+
+var initComplete = false;
+
+var tree = new Ext.tree.TreePanel({ 
+		//layout: 'anchor', <-- 요걸로 하면 스크롤바가.. ㅜ.ㅜ
+		animate: false,
+		border : false,
+		rootVisible: false,
+		frame: false,
+        scrollable: true,
+        region: 'center',
+		store : tree_store,
+        
+        tbar  : new Ext.Toolbar({
+            cls:'top-toolbar',
+            items:[,{
+                text:'Add',
+                tooltip: 'Expand All',
+                handler: function(){ 
+                    if( select_tree_id != null ){
+                        Ext.MessageBox.prompt('확인', '신규 분류 명칭을 입력해주십시오', action_cls_insert );
+                    } }
+                },{
+                text:'Mod',
+                tooltip: 'Expand All',
+                handler: function(){ 
+                    if( select_tree_id != null ){
+                        Ext.MessageBox.prompt('확인', '변경될 분류 명칭을 입력해주십시오', action_cls_modify );
+                    } }
+                },{
+                text:'Del',
+                tooltip: 'Expand All',
+                handler: function(){ 
+                    if( select_tree_id != null ){
+                        Ext.MessageBox.confirm('확인', '해당 분류를 삭제 하시겠습니까?', action_cls_delete );
+                    } }
+                }
+            ]
+        }),
+        autoHeight:true,
+        anchor:'100% 100%',
+        viewConfig: {
+            stripeRows: true,
+            forceFit: true,
+            style : { overflow: 'auto' }
+        }
+	});  
+
+    var saveCookie = function( record ){
+		var oids = record.getPath();
+
+		setCookieLT( 'CLS_TREE', oids, 604800, '/');
+	}
+
+    tree.on( 'itemclick', function( obj , record, item ) { select_tree_id = record.data.id; select_tree_record = record.data; saveCookie( record ); }, this );
+    
+//------------------------------------------------------
+
+
+
+ 
+Ext.onReady(function(){
+isTouchTheme = Ext.themeName === 'crisp-touch';
+ 
+var anchor = 
+Ext.create('Ext.container.Viewport', {
+    layout: 'border',
+    items: [{
+        region: 'north',
+        html: '<h1 class="x-panel-header"> &nbsp; &nbsp; &nbsp; 전자 현황판 관리</h1>',
+        border: false,
+        margin: '0 0 5 0'
+    }, {
+        region: 'west',
+        collapsible: false,
+        //title: '분류',
+        width: 250,
+        items: [
+            tree
+        ]
+    }  ]
+});
+
+    tree.expandPath( lastPath );
+    tree.selectPath( lastPath );
+    select_tree_id = lastPath.substring( lastPath.lastIndexOf( "/" ) + 1);
+ 
+});
+</script>
+
+
+<style type="text/css">
+ 
+.rept{
+    margin-bottom:10px;
+}
+.x-form-layout-wrap
+{
+        border-spacing: 0px;
+}
+
+.x-grid-cell-inner
+{
+        padding-bottom : 7px;
+        padding-top : 8px;
+}
+
+DIV.TITLE{
+
+padding-top : 25px;
+}
+</style>
+    <body style="width:100%">
+    </body>
+</html>

@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" >
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" >
+        <title>2015년도 프로젝트 수행현황</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=10, user-scalable=yes"/>
+
+        <link rel="stylesheet" type="text/css" href="/extjs/packages/ext-theme-crisp-touch/build/resources/ext-theme-crisp-touch-all.css" />
+        <script type="text/javascript" src="/extjs/ext-all.js"></script>
+        <script type="text/javascript" src="/extjs/common.js"></script>
+        <link rel="stylesheet" type="text/css" href="/extjs/css/new2015.css">
+
+    </head>
+
+<script>
+
+ 
+
+/* 
+ * 공통으로 사용하기 위한 코드들을 모아놓은곳이라 보면 된다..
+ * 일단은 쿠키 처리를 위하여 wiseman에서 사용되던 소스를 일부 가져왔다..
+ */
+
+var theme;  
+var select_tree_id = "";  
+var select_tree_record = null;  
+
+
+
+//--------------------------- 일단은 선을 긋고..............................
+//-------- 분류체계 조회/추가/삭제/변경 까지 확인...........................
+
+var lastPath = getCookie( 'CLS_TREE'  );
+
+function reload_tree() {
+    tree.getStore().load();
+    var path = getCookie( 'CLS_TREE'  );
+    tree.expandPath( lastPath );
+    tree.selectPath( lastPath );
+
+}
+
+var tree_store = Ext.create('Ext.data.TreeStore', {
+		fields: ['text','id','order', 'OBJECT_ID' ],
+		proxy:{type:'ajax',url: '/Process.aspx?action=GetList',reader:{type:'json',root: 'links' }, extraParams: { 'PATH' : lastPath, 'fullload' : this.fullload , 'type': this.targettype, 'checked' : this.checked, 'displayvalue' : this.displayvalue,'displaycode' : this.displaycode,'displaysort' : this.displaysort } },
+		root:{text:this.rootTitle,id:this.rootID, order:'0'},
+		folderSort: true,
+		sorters: [{property: 'order',direction: 'ASC'}]
+	});
+
+function action_cls_insert( btn,text )
+{
+    if( btn == 'ok' )
+    {
+        if( text == null || text == '' ) { alert('입력을 확인해 주십시오'); return; }
+
+        if( select_tree_record == null )
+        {
+            var record = tree.getRootNode().findChild('id',select_tree_id,true);
+            select_tree_record = record.data;
+        }
+
+        Ext.Ajax.request({
+            url:'/Process.aspx?action=ClsIns',
+            params: { 'OBJECT_ID' : select_tree_record.OBJECT_ID , 'CATE_NAME' : text },
+	        method:'GET',
+	        success:function( result, request ){
+                var jsonData = Ext.JSON.decode(result.responseText);
+                var res = jsonData.RESULT;
+	            if( res == 'true' )
+                {
+                    alert('성공하였습니다.');
+                    reload_tree();
+                }else{
+                    alert('실패하였습니다.');
+                }
+            },
+	        failure:function(result,request){
+	            alert( '실패하였습니다. 결과를 확인해 주십시오.' );
+            }
+        });
+        return;
+    }
+}
+function action_cls_delete ( btn )
+{
+    if( btn == 'yes' )  
+    {
+        if( select_tree_record == null )
+        {
+            var record = tree.getRootNode().findChild('id',select_tree_id,true);
+            select_tree_record = record.data;
+        }
+
+        Ext.Ajax.request({
+            url:'/Process.aspx?action=ClsDel',
+            params: { 'OBJECT_ID' : select_tree_record.OBJECT_ID },
+	        method:'GET',
+	        success:function( result, request ){
+                var jsonData = Ext.JSON.decode(result.responseText);
+                var res = jsonData.RESULT;
+	            if( res == 'true' )
+                {
+                    alert('성공하였습니다.');
+                    reload_tree();
+                }else{
+                    alert('실패하였습니다.');
+                }
+            },
+	        failure:function(result,request){
+	            alert( '실패하였습니다. 결과를 확인해 주십시오.' );
+            }
+        });
+    }
+}
+function action_cls_modify( btn, text )
+{
+    if( btn == 'ok' )
+    {
+        if( text == null || text == '' ) { alert('입력을 확인해 주십시오'); return; }
+
+        if( select_tree_record == null )
+        {
+            var record = tree.getRootNode().findChild('id',select_tree_id,true);
+            select_tree_record = record.data;
+        }
+
+        Ext.Ajax.request({
+            url:'/Process.aspx?action=ClsMod',
+            params: { 'OBJECT_ID' : select_tree_record.OBJECT_ID , 'CATE_NAME' : text },
+	        method:'GET',
+	        success:function( result, request ){
+                var jsonData = Ext.JSON.decode(result.responseText);
+                var res = jsonData.RESULT;
+	            if( res == 'true' )
+                {
+                    alert('성공하였습니다.');
+                    reload_tree();
+                }else{
+                    alert('실패하였습니다.');
+                }
+            },
+	        failure:function(result,request){
+	            alert( '실패하였습니다. 결과를 확인해 주십시오.' );
+            }
+        });
+        return;
+    }
+}   
+
+var initComplete = false;
+
+var tree = new Ext.tree.TreePanel({ 
+		//layout: 'anchor', <-- 요걸로 하면 스크롤바가.. ㅜ.ㅜ
+		animate: false,
+		border : false,
+		rootVisible: false,
+		frame: false,
+        scrollable: true,
+        region: 'center',
+		store : tree_store,
+        
+        tbar  : new Ext.Toolbar({
+            cls:'top-toolbar',
+            items:[,{
+                text:'Add',
+                tooltip: 'Expand All',
+                handler: function(){ 
+                    if( select_tree_id != null ){
+                        Ext.MessageBox.prompt('확인', '신규 분류 명칭을 입력해주십시오', action_cls_insert );
+                    } }
+                },{
+                text:'Mod',
+                tooltip: 'Expand All',
+                handler: function(){ 
+                    if( select_tree_id != null ){
+                        Ext.MessageBox.prompt('확인', '변경될 분류 명칭을 입력해주십시오', action_cls_modify );
+                    } }
+                },{
+                text:'Del',
+                tooltip: 'Expand All',
+                handler: function(){ 
+                    if( select_tree_id != null ){
+                        Ext.MessageBox.confirm('확인', '해당 분류를 삭제 하시겠습니까?', action_cls_delete );
+                    } }
+                }
+            ]
+        }),
+        autoHeight:true,
+        anchor:'100% 100%',
+        viewConfig: {
+            stripeRows: true,
+            forceFit: true,
+            style : { overflow: 'auto' }
+        }
+	});  
+
+    var saveCookie = function( record ){
+		var oids = record.getPath();
+
+		setCookieLT( 'CLS_TREE', oids, 604800, '/');
+	}
+
+    tree.on( 'itemclick', function( obj , record, item ) { select_tree_id = record.data.id; select_tree_record = record.data; saveCookie( record ); }, this );
+    
+//------------------------------------------------------
+
+
+function renderNormal( value )
+{
+    //return '<div style="white-space:normal; !important;">' + value + ' </div>';
+return value;
+}
+
+    var myData = [
+        ['8502','1','RNH1401','2014년 원강선 고속전철 150량','null','제작시험','89%','89%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','3,004','2853','151','<img src=/enovia/common/images/icon_green.png />','449','440','9.0','<img src=/enovia/common/images/icon_green.png />','-','-' ] ,['8508','2','RNE1502','2015년 코레일공항철도 전동차 12량 ','null','상세설계','44%','44%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','126','126','0','<img src=/enovia/common/images/icon_green.png />','213','210','3.0','<img src=/enovia/common/images/icon_green.png />','611','99%' ] ,['8487','3','RNE1403','2014년 성남여주선 전동차 48량','48','제작시험','89%','<font color=red>88%</font>','<img width=11 height=11 src=/enovia/common/images/icon_yellow.png height=20 width=20 />','540','525','14','<img src=/enovia/common/images/icon_green.png />','164','161','2.5','<img src=/enovia/common/images/icon_green.png />','4,171','<font color=red>77%</font>' ] ,['8486','4','RNE1404','2014년 동해남부선 전동차 40량','null','제작시험','85%','85%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','370','360','10','<img src=/enovia/common/images/icon_green.png />','164','161','2.5','<img src=/enovia/common/images/icon_green.png />','4,060','<font color=red>75%</font>' ] ,['8503','5','RNE1405','2014년 터키 이스탄불(예니카프) 68량','null','상세설계','41%','41%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','460','459','0','<img src=/enovia/common/images/icon_green.png />','137','134','3.0','<img src=/enovia/common/images/icon_green.png />','595','99%' ] ,['8509','6','RNV1501','2015년 터키 안탈리아 트램 18편성 ','null','상세설계','67%','67%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','59','59','0','<img src=/enovia/common/images/icon_green.png />','46','44','1.5','<img src=/enovia/common/images/icon_green.png />','2,652','99%' ] ,['8504','7','RNV1401','2014년 터키 이즈미르 트램 38편성','38','상세설계','78%','78%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','513','553','<span style=color:red>-41</span>','<img src=/enovia/common/images/icon_yellow.png />','46','44','1.5','<img src=/enovia/common/images/icon_green.png />','-','-' ] ,['8483','8','RNE1307','2013년 브라질 살바도르 2호선 전동차 136량','null','제작시험','90%','90%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','1,354','1261','93','<img src=/enovia/common/images/icon_green.png />','175','172','3.3','<img src=/enovia/common/images/icon_green.png />','-','-' ] ,['8484','9','RNE1302','2013년 브라질 CPTM 전동차 240량','null','제작시험','89%','89%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','3,173','3086','87','<img src=/enovia/common/images/icon_green.png />','380','378','2.0','<img src=/enovia/common/images/icon_green.png />','-','-' ] ,['8481','10','RNE1210','2012년 홍콩 MTR SCL 전동차 333량','100','제작시험','92%','<font color=red>91%</font>','<img width=11 height=11 src=/enovia/common/images/icon_yellow.png height=20 width=20 />','3,668','3750','<span style=color:red>-82</span>','<img src=/enovia/common/images/icon_yellow.png />','413','411','1.3','<img src=/enovia/common/images/icon_green.png />','-','-' ] ,['8485','11','RNE1301','2013년 인도 DMRC RS10 전동차 486량','null','제작시험','94%','<font color=red>86%</font>','<img width=11 height=11 src=/enovia/common/images/icon_yellow.png height=20 width=20 />','5,240','5725','<span style=color:red>-485</span>','<img src=/enovia/common/images/icon_yellow.png />','252','258','<span style=color:red>-6.2</span>','<img src=/enovia/common/images/icon_yellow.png />','-','-' ] ,['8488','12','RNH1402','2014년 수서 고속전철 100량','null','제작시험','98%','98%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','2,034','1993','41','<img src=/enovia/common/images/icon_green.png />','441','439','1.9','<img src=/enovia/common/images/icon_green.png />','-','-' ] ,['8482','13','RNE1306','2013년 부산 1호선 전동차 48량','null','제작시험','91%','91%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','395','372','22','<img src=/enovia/common/images/icon_green.png />','262','251','11.5','<img src=/enovia/common/images/icon_green.png />','-','-' ] ,['8501','14','RNE1401','2014년 코레일 1호선 전동차 90량','null','제작시험','91%','91%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','737','715','22','<img src=/enovia/common/images/icon_green.png />','384','378','6.1','<img src=/enovia/common/images/icon_green.png />','-','-' ] ,['8507','15','RNE1503','2015년 코레일 소사-원시 전동차 28량','28','기본설계','36%','36%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','341','341','0','<img src=/enovia/common/images/icon_green.png />','160','160','-','<img src=/enovia/common/images/icon_green.png />','159','100%' ] ,['8505','16','RNE1504','2015년 서울시 5호선(하남선) 전동차 32량(개조 608량 포함)','null','기본설계','8%','8%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','268','268','0','<img src=/enovia/common/images/icon_green.png />','282','272','9.5','<img src=/enovia/common/images/icon_green.png />','','' ] ,['8506','17','RNE1501','2015년 서울시 9호선 전동차 70량(1단계 32량)','null','상세설계','63%','63%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','555','550','5','<img src=/enovia/common/images/icon_green.png />','144','141','3.0','<img src=/enovia/common/images/icon_green.png />','3,468','98%' ] 
+    ];
+
+    var store = Ext.create('Ext.data.ArrayStore', {
+        fields: [
+		   {name: 'Object_Id'},
+           {name: 'No'},
+           {name: 'PrjCode'},
+           {name: 'PrjName'},
+           {name: 'Count'},
+           {name: 'Step'},
+           {name: 'RND_1'},
+           {name: 'RND_2'},
+           {name: 'RND_3'},
+           {name: 'COST1'},
+           {name: 'COST2'},
+           {name: 'COST3'},
+           {name: 'COST4'},
+           {name: 'WEIGHT1'},
+           {name: 'WEIGHT2'},
+           {name: 'WEIGHT3'},
+           {name: 'WEIGHT4'},
+           {name: 'PARTSCORE01'},
+           {name: 'PARTSCORE10'},
+           {name: 'ActionDate'},
+           {name: 'OwnerTeam'},
+           {name: 'lastChange', type: 'date', dateFormat: 'n/j h:ia'}
+            
+           //{name: 'price',      type: 'float'}
+        ],
+        data: myData
+    });
+
+
+ 
+Ext.onReady(function(){
+isTouchTheme = Ext.themeName === 'crisp-touch';
+
+
+    var grid_toolbar;
+
+    var grid = Ext.create('Ext.grid.Panel', {
+        //title: '관리항목',
+        store: store,
+        columnLines: true,
+        columns: [
+        {
+            text     : '순',
+            locked   : true,
+            width    : 30,
+            align    : 'center',
+            style: 'text-align:center',
+             editable : true,
+            renderer : renderNormal,
+            dataIndex: 'No'
+        },
+        {
+            text     : '관리명칭',
+            locked   : true,
+            width    : 300,
+            sortable : false,
+            autoRender : true,
+            renderer : renderNormal,
+            style: 'text-align:center',
+            align    : 'left',
+            dataIndex: 'PrjName'
+        },
+        {
+            text     : '관리코드',
+            flex     : 40,
+            sortable : false,
+            autoRender : true,
+            renderer : renderNormal,
+            style: 'text-align:center',
+            align    : 'center',
+            dataIndex: 'Step'
+        },
+        {
+            text     : '사업부',
+            flex     : 40,
+            sortable : false,
+            autoRender : true,
+            renderer : renderNormal,
+            style: 'text-align:center',
+            align    : 'center',
+            dataIndex: 'Step'
+        },
+        {
+            text     : '관리주기',
+            flex     : 60,
+            sortable : false,
+            autoRender : true,
+            renderer : renderNormal,
+            style: 'text-align:center',
+            align    : 'center',
+            dataIndex: 'Step'
+        },
+        {
+            text     : '기준년도',
+            flex     : 40,
+            sortable : false,
+            autoRender : true,
+            renderer : renderNormal,
+            style: 'text-align:center',
+            align    : 'center',
+            dataIndex: 'Step'
+        },
+        {
+            text     : '연간',
+            flex     : 40,
+            sortable : false,
+            autoRender : true,
+            renderer : renderNormal,
+            style: 'text-align:center',
+            align    : 'center',
+            dataIndex: 'Step'
+        },
+        {
+            text: '반기',
+            columns: [{
+                text     : '상반기',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_1'
+            }, {
+                text     : '하반기',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }
+            ]
+        },
+        {
+            text: '분기',
+            columns: [{
+                text     : '1분기',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_1'
+            }, {
+                text     : '2분기',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '3분기',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '4분기',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }
+            ]
+        },
+        {
+            text: '월간',
+            columns: [{
+                text     : '1월',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_1'
+            }, {
+                text     : '2월',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '3월',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '4월',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '5월',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '6월',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '7월',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '8월',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '9월',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '10월',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '11월',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '12월',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }
+            ]
+        },
+        {
+            text: '주간',
+            columns: [{
+                text     : '기준월',
+                width    : 60,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_1'
+            }, {
+                text     : '1주차',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '2주차',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '3주차',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '4주차',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '5주차',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }
+            ]
+        },
+        {
+            text: '일간',
+            columns: [{
+                text     : '기준월',
+                width    : 80,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_1'
+            }, {
+                text     : '1',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '2',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '3',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '4',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '5',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '6',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '7',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '8',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '9',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '10',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '11',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '12',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '13',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '14',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '15',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '16',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '17',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '18',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '19',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '20',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '21',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '22',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '23',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '24',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '25',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '26',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '27',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '28',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '29',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '30',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '31',
+                width    : 40,
+                 editable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }
+            ]
+        }  
+        ],
+        tbar  : grid_toolbar = new Ext.Toolbar({
+            cls:'top-toolbar',
+            items:[ '->' ,{
+                    xtype : 'combo',
+                    id: 'ID_FILTERCOMBO1',
+                    width: 80,
+                    queryMode:'local',
+                    store:[ '전체', '철차','중기','플랜트' ]
+                },{
+                    xtype : 'combo',
+                    id: 'ID_FILTERCOMBO2',
+                    width: 80,
+                    queryMode:'local',
+                    store:[ '년간', '반기', '분기', '월간', '주간', '일간' ]
+                },{
+                    xtype : 'textfield',
+                    id: 'ID_FILTERTEXT',
+                    width: 100,
+                },{
+                text:'검색',
+                handler: function(){ 
+                    if( select_tree_id != null ){
+                        //----------
+                    } }
+                },{
+                text:'추가',
+//iconCls: 'print' ,
+                tooltip: 'Expand All',
+                handler: function(){ 
+                    if( select_tree_id != null ){
+                        Ext.MessageBox.prompt('확인', '신규 분류 명칭을 입력해주십시오', action_cls_insert );
+                    } }
+                },{
+                text:'삭제',
+                tooltip: 'Expand All',
+                handler: function(){ 
+                    if( select_tree_id != null ){
+                        Ext.MessageBox.prompt('확인', '변경될 분류 명칭을 입력해주십시오', action_cls_modify );
+                    } }
+                },{
+                text:'저장',
+                tooltip: 'Expand All',
+                handler: function(){ 
+                    if( select_tree_id != null ){
+                        Ext.MessageBox.confirm('확인', '해당 분류를 삭제 하시겠습니까?', action_cls_delete );
+                    } }
+                }
+            ]
+        }),
+        autoHeight:true,
+        region: 'center',
+        viewConfig: {
+            stripeRows: true,
+            forceFit: true
+        }
+    });
+
+
+grid.on( 'rowdblclick', function( target, record, tr, rowIndex, e, opts ){
+    var projectcode = record.data.PrjCode;
+    var object_id = record.data.Object_Id;
+    this.location = URL_DETAIL + "&PRJCODE=" + projectcode + "&ObjectId=" + object_id;;
+}, self );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//----------------------------------------------------------
+
+
+var anchor = 
+Ext.create('Ext.container.Viewport', {
+    layout: 'border',
+    items: [{
+        region: 'north',
+        html: '<h1 class="x-panel-header"> &nbsp; &nbsp; &nbsp; 전자 현황판 관리</h1>',
+        border: false,
+        margin: '0 0 5 0'
+    }, {
+        region: 'west',
+        collapsible: false,
+        //title: '분류',
+        width: 250,
+        items: [
+            tree
+        ]
+    } , grid ]
+});
+
+    tree.expandPath( lastPath );
+    tree.selectPath( lastPath );
+    select_tree_id = lastPath.substring( lastPath.lastIndexOf( "/" ) + 1);
+ 
+});
+</script>
+
+
+<style type="text/css">
+ 
+.rept{
+    margin-bottom:10px;
+}
+.x-form-layout-wrap
+{
+        border-spacing: 0px;
+}
+
+.x-grid-cell-inner
+{
+        padding-bottom : 7px;
+        padding-top : 8px;
+}
+
+DIV.TITLE{
+
+padding-top : 25px;
+}
+</style>
+    <body style="width:100%">
+    </body>
+</html>

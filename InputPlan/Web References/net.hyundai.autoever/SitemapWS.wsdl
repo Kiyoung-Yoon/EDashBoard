@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://tempuri.org/" xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" targetNamespace="http://tempuri.org/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://tempuri.org/">
+      <s:element name="GetPlainText">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="strEncID" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="strCompanyCode" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="strEncText" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetPlainTextResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetPlainTextResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="GetPlainTextSoapIn">
+    <wsdl:part name="parameters" element="tns:GetPlainText" />
+  </wsdl:message>
+  <wsdl:message name="GetPlainTextSoapOut">
+    <wsdl:part name="parameters" element="tns:GetPlainTextResponse" />
+  </wsdl:message>
+  <wsdl:portType name="SitemapWSSoap">
+    <wsdl:operation name="GetPlainText">
+      <documentation xmlns="http://schemas.xmlsoap.org/wsdl/">암호화된 문장에 대한 복호화</documentation>
+      <wsdl:input message="tns:GetPlainTextSoapIn" />
+      <wsdl:output message="tns:GetPlainTextSoapOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="SitemapWSSoap" type="tns:SitemapWSSoap">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="GetPlainText">
+      <soap:operation soapAction="http://tempuri.org/GetPlainText" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="SitemapWS">
+    <wsdl:port name="SitemapWSSoap" binding="tns:SitemapWSSoap">
+      <soap:address location="http://autoever.hyundai.net/Webservices/SSO/SitemapWS.asmx" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

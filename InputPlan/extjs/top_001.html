@@ -1,0 +1,438 @@
+
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" >
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" >
+        <title>2015년도 프로젝트 수행현황</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=10, user-scalable=yes"/>
+
+        <link rel="stylesheet" type="text/css" href="/extjs/packages/ext-theme-crisp-touch/build/resources/ext-theme-crisp-touch-all.css" />
+        <script type="text/javascript" src="/extjs/ext-all.js"></script>
+        <link rel="stylesheet" type="text/css" href="/extjs/css/new2015.css">
+
+    </head>
+
+<script>
+
+ 
+/*
+ * 20150507
+ * 아무것도 생각안하고 빠른 개발로만 진행..
+ * 네이밍 및 기타 등등 무시.. 
+ * 그냥 빠르게만 진행한다..
+ * 원래는 EXTJS도 배열을 만들어서 처리하는게 아니라
+ * store 를 만들어서 동적으로 가져와야만 한다.
+ */
+
+var theme;
+var TITLE = '2015년도 프로젝트 수행현황';
+var URL_DETAIL = "/enovia/ext-5.1.0/summary1.jsp?";
+var grid_height = '548';
+var timestring = '2016.03.15';
+
+var PRJ1_SUM = '10';
+var PRJ1_STEP1 = '2';
+var PRJ1_STEP2 = '2';
+var PRJ1_STEP3 = '6';
+var PRJ1_STEP4 = '';
+var PRJ1_DELAY = '1/-';
+var PRJ2_SUM = '7';
+var PRJ2_STEP1 = '';
+var PRJ2_STEP2 = '3';
+var PRJ2_STEP3 = '4';
+var PRJ2_STEP4 = '';
+var PRJ2_DELAY = '2/-';
+var PRJ3_SUM = '-';
+var PRJ3_STEP1 = '';
+var PRJ3_STEP2 = '';
+var PRJ3_STEP3 = '';
+var PRJ3_STEP4 = '';
+var PRJ3_DELAY = '-/-';
+var PRJT_SUM = '17';
+var PRJT_STEP1 = '2';
+var PRJT_STEP2 = '5';
+var PRJT_STEP3 = '10';
+var PRJT_STEP4 = '-';
+var PRJT_DELAY = '3/-';
+
+
+function onPjtInfoChange( projectcode )
+{
+	//alert( projectcode + '--' + keydate + '--' + coltype +'--' + status );
+	var url = 'summary9.jsp';
+	open( url,"_blank","height=500,width=500,status=no,toolbar=no,menubar=no,location=no,resizable=yes");
+}
+
+
+function getCol00_01()
+{
+    var ret = "<div class='TITLE' style='text-decoration:none'><a href='javascript:onPjtInfoChange();' style='text-decoration:none'><span class='PRJ_TITLE' style='text-decoration:none'>전체 프로젝트 종합</span></a>"
+ +"<span class='note'>기준일 : " + timestring + "&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><div>";
+    return ret;
+}
+function getCol00_02()
+{
+    var ret = "<span style='text-align:right; vertical-align: bottom;'>" + timestring + "</span>";
+    return ret;
+}
+
+function getCol01_01()
+{
+    var ret = 
+"<span class='note'>※ 범례 : <img src='/enovia/common/images/icon_green.png'> 정상 (진도율 100%↑)  / <img src='images/icon_yellow.png'> 경고 ( 90%↑)  / <img src='images/icon_red.png'> 위험 ( 90%↓)</span>"
++ "<table class='rept' width='100%'>"
++   "<tr><th width='16%'>구분</th><th width='14%'>합계</th><th width='14%'>기본설계<BR>(0~40%)</th><th width='14%'>상세설계<BR>(41~80%)</th><th width='14%'>제작시험<BR>(81-99%)</th><th width='14%'>설계완료<BR>(100%)</th><th width='14%'>지연프로젝트<BR> (경고 / 위험)</th></tr>"
+//+   "<tr><th width='16%'>구분</th><th width='14%'>합계</th><th width='14%'>기본설계(0~40%)<BR><img src=images/prj_step_0.gif height=14 width=50 /></th><th width='14%'>상세설계(41~80%)<BR><img src=images/prj_step_1.gif height=14 width=50 /></th><th width='14%'>제작시험(81-99%)<BR><img src=images/prj_step_2.gif height=14 width=50 /></th><th width='14%'>설계완료(100%)<BR><img src=images/prj_step_3.gif height=14 width=50 /></th><th width='14%'>지연프로젝트<BR> (경고 / 위험)</th></tr>"
+
++   "<tr><td>국내 프로젝트</td><td>" + PRJ1_SUM + "</td><td>" + PRJ1_STEP1 + "</td><td>" + PRJ1_STEP2 + "</td><td>" + PRJ1_STEP3 + "</td><td>" + PRJ1_STEP4 + "</td><td>" + PRJ1_DELAY + "</td></tr>"
++   "<tr><td>해외 프로젝트</td><td>" + PRJ2_SUM + "</td><td>" + PRJ2_STEP1 + "</td><td>" + PRJ2_STEP2 + "</td><td>" + PRJ2_STEP3 + "</td><td>" + PRJ2_STEP4 + "</td><td>" + PRJ2_DELAY + "</td></tr>"
+//+   "<tr><td>개발 프로젝트</td><td>" + PRJ3_SUM + "</td><td>" + PRJ3_STEP1 + "</td><td>" + PRJ3_STEP2 + "</td><td>" + PRJ3_STEP3 + "</td><td>" + PRJ3_STEP4 + "</td><td>" + PRJ3_DELAY + "</td></tr>"
++   "<tr class='total'><td >합계</td><td>" + PRJT_SUM + "</td><td>" + PRJT_STEP1 + "</td><td>" + PRJT_STEP2 + "</td><td>" + PRJT_STEP3 + "</td><td>" + PRJT_STEP4 + "</td><td>" + PRJT_DELAY + "</td></tr>"
++ "</table>";
+
+    return ret;
+}
+
+function getCol01_02()
+{
+    var ret = "<table><tr><td><table class='rept2' width='220px' height='160px'>"
++   "<tr><td style='text-align:left;' class='trans' width=100%>"
++ "<TABLE class='trans' width=100% height='130px' ><TR height='2px'></TR><TR><TD> </TD><TD COLSPAN=4 style='text-align:left'>※ 범 례 </TD></TR><TR height='2px'></TR>"
++" <TD width='20px'> </TD><TD width='25px'><img src=/enovia/common/images/icon_green.png height=20 width=20 /></TD><TD width=25% nowrap>정상</TD><TD nowrap style='text-align:left'>(달성율 100%↑)</TD></TR>"
++" <TD> </TD><TD width='25px'><img src=/enovia/common/images/icon_yellow.png height=20 width=20 /></TD><TD width=25% nowrap>경고</TD><TD nowrap style='text-align:left'>(달성율  90%↑)</TD></TR>"
++" <TD> </TD><TD width='25px'><img src=/enovia/common/images/icon_red.png height=20 width=20 /></TD><TD width=25% nowrap>위험</TD><TD nowrap style='text-align:left'>(달성율  90%↓)</TD></TR>"
++" </TABLE>"
++ "</td></tr>"
++ "</table></td></tr></table>";
+    return ret; 
+    //<tr><td height='70px' style='text-align:right; vertical-align: bottom;'>" + timestring + "</td></tr>
+}
+
+function renderNormal( value )
+{
+    return '<div style="white-space:normal; !important;">' + value + ' </div>';
+}
+
+    var myData = [
+        ['8502','1','RNH1401','2014년 원강선 고속전철 150량','null','제작시험','89%','89%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','3,004','2853','151','<img src=/enovia/common/images/icon_green.png />','449','440','9.0','<img src=/enovia/common/images/icon_green.png />','-','-' ] ,['8508','2','RNE1502','2015년 코레일공항철도 전동차 12량 ','null','상세설계','44%','44%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','126','126','0','<img src=/enovia/common/images/icon_green.png />','213','210','3.0','<img src=/enovia/common/images/icon_green.png />','611','99%' ] ,['8487','3','RNE1403','2014년 성남여주선 전동차 48량','48','제작시험','89%','<font color=red>88%</font>','<img width=11 height=11 src=/enovia/common/images/icon_yellow.png height=20 width=20 />','540','525','14','<img src=/enovia/common/images/icon_green.png />','164','161','2.5','<img src=/enovia/common/images/icon_green.png />','4,171','<font color=red>77%</font>' ] ,['8486','4','RNE1404','2014년 동해남부선 전동차 40량','null','제작시험','85%','85%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','370','360','10','<img src=/enovia/common/images/icon_green.png />','164','161','2.5','<img src=/enovia/common/images/icon_green.png />','4,060','<font color=red>75%</font>' ] ,['8503','5','RNE1405','2014년 터키 이스탄불(예니카프) 68량','null','상세설계','41%','41%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','460','459','0','<img src=/enovia/common/images/icon_green.png />','137','134','3.0','<img src=/enovia/common/images/icon_green.png />','595','99%' ] ,['8509','6','RNV1501','2015년 터키 안탈리아 트램 18편성 ','null','상세설계','67%','67%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','59','59','0','<img src=/enovia/common/images/icon_green.png />','46','44','1.5','<img src=/enovia/common/images/icon_green.png />','2,652','99%' ] ,['8504','7','RNV1401','2014년 터키 이즈미르 트램 38편성','38','상세설계','78%','78%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','513','553','<span style=color:red>-41</span>','<img src=/enovia/common/images/icon_yellow.png />','46','44','1.5','<img src=/enovia/common/images/icon_green.png />','-','-' ] ,['8483','8','RNE1307','2013년 브라질 살바도르 2호선 전동차 136량','null','제작시험','90%','90%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','1,354','1261','93','<img src=/enovia/common/images/icon_green.png />','175','172','3.3','<img src=/enovia/common/images/icon_green.png />','-','-' ] ,['8484','9','RNE1302','2013년 브라질 CPTM 전동차 240량','null','제작시험','89%','89%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','3,173','3086','87','<img src=/enovia/common/images/icon_green.png />','380','378','2.0','<img src=/enovia/common/images/icon_green.png />','-','-' ] ,['8481','10','RNE1210','2012년 홍콩 MTR SCL 전동차 333량','100','제작시험','92%','<font color=red>91%</font>','<img width=11 height=11 src=/enovia/common/images/icon_yellow.png height=20 width=20 />','3,668','3750','<span style=color:red>-82</span>','<img src=/enovia/common/images/icon_yellow.png />','413','411','1.3','<img src=/enovia/common/images/icon_green.png />','-','-' ] ,['8485','11','RNE1301','2013년 인도 DMRC RS10 전동차 486량','null','제작시험','94%','<font color=red>86%</font>','<img width=11 height=11 src=/enovia/common/images/icon_yellow.png height=20 width=20 />','5,240','5725','<span style=color:red>-485</span>','<img src=/enovia/common/images/icon_yellow.png />','252','258','<span style=color:red>-6.2</span>','<img src=/enovia/common/images/icon_yellow.png />','-','-' ] ,['8488','12','RNH1402','2014년 수서 고속전철 100량','null','제작시험','98%','98%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','2,034','1993','41','<img src=/enovia/common/images/icon_green.png />','441','439','1.9','<img src=/enovia/common/images/icon_green.png />','-','-' ] ,['8482','13','RNE1306','2013년 부산 1호선 전동차 48량','null','제작시험','91%','91%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','395','372','22','<img src=/enovia/common/images/icon_green.png />','262','251','11.5','<img src=/enovia/common/images/icon_green.png />','-','-' ] ,['8501','14','RNE1401','2014년 코레일 1호선 전동차 90량','null','제작시험','91%','91%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','737','715','22','<img src=/enovia/common/images/icon_green.png />','384','378','6.1','<img src=/enovia/common/images/icon_green.png />','-','-' ] ,['8507','15','RNE1503','2015년 코레일 소사-원시 전동차 28량','28','기본설계','36%','36%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','341','341','0','<img src=/enovia/common/images/icon_green.png />','160','160','-','<img src=/enovia/common/images/icon_green.png />','159','100%' ] ,['8505','16','RNE1504','2015년 서울시 5호선(하남선) 전동차 32량(개조 608량 포함)','null','기본설계','8%','8%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','268','268','0','<img src=/enovia/common/images/icon_green.png />','282','272','9.5','<img src=/enovia/common/images/icon_green.png />','','' ] ,['8506','17','RNE1501','2015년 서울시 9호선 전동차 70량(1단계 32량)','null','상세설계','63%','63%','<img width=11 height=11 src=/enovia/common/images/icon_green.png height=20 width=20 />','555','550','5','<img src=/enovia/common/images/icon_green.png />','144','141','3.0','<img src=/enovia/common/images/icon_green.png />','3,468','98%' ] 
+    ];
+
+    var store = Ext.create('Ext.data.ArrayStore', {
+        fields: [
+		   {name: 'Object_Id'},
+           {name: 'No'},
+           {name: 'PrjCode'},
+           {name: 'PrjName'},
+           {name: 'Count'},
+           {name: 'Step'},
+           {name: 'RND_1'},
+           {name: 'RND_2'},
+           {name: 'RND_3'},
+           {name: 'COST1'},
+           {name: 'COST2'},
+           {name: 'COST3'},
+           {name: 'COST4'},
+           {name: 'WEIGHT1'},
+           {name: 'WEIGHT2'},
+           {name: 'WEIGHT3'},
+           {name: 'WEIGHT4'},
+           {name: 'PARTSCORE01'},
+           {name: 'PARTSCORE10'},
+           {name: 'ActionDate'},
+           {name: 'OwnerTeam'},
+           {name: 'lastChange', type: 'date', dateFormat: 'n/j h:ia'}
+            
+           //{name: 'price',      type: 'float'}
+        ],
+        data: myData
+    });
+
+    var grid = Ext.create('Ext.grid.Panel', {
+        store: store,
+        columnLines: true,
+        columns: [
+        {
+            text     : '순',
+            flex     : 5,
+            align    : 'center',
+            style: 'text-align:center',
+            sortable : true,
+            renderer : renderNormal,
+            dataIndex: 'No'
+        },
+        {
+            text     : '프로젝트명',
+            flex     : 170,
+            sortable : false,
+            autoRender : true,
+            renderer : renderNormal,
+            style: 'text-align:center',
+            align    : 'left',
+            dataIndex: 'PrjName'
+        },
+/*        {
+            text     : '수량',
+            flex     : 10,
+            sortable : false,
+            autoRender : true,
+            renderer : renderNormal,
+            align    : 'right',
+            dataIndex: 'Count'
+        },
+        */
+        {
+            text     : '수행단계',
+            flex     : 40,
+            sortable : false,
+            autoRender : true,
+            renderer : renderNormal,
+            style: 'text-align:center',
+            align    : 'center',
+            dataIndex: 'Step'
+        },
+        {
+            text: '설계 진도율 (%)',
+            columns: [{
+                text     : '계획',
+                width    : 60,
+                sortable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_1'
+            }, {
+                text     : '실적',
+                width    : 60,
+                sortable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'RND_2'
+            }, {
+                text     : '상태',
+                width    : 50,
+                sortable : true,
+                renderer : renderNormal,
+                style: 'text-align:center',
+                align    : 'center',
+                dataIndex: 'RND_3' 
+            }
+            ]
+        },
+
+        {
+            text: '도면배포준수율 (%)',
+            columns: [{ 
+                text     : '총수량',
+                width    : 70,
+                sortable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'PARTSCORE01'
+            }, {
+                text     : '비율',
+                width    : 60,
+                sortable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; ',
+                align    : 'center',
+                dataIndex: 'PARTSCORE10' 
+            }
+            ]
+        }, 
+        {
+            text: '재료비 (억)',
+            columns: [{
+                text     : '목표',
+                width    : 60,
+                sortable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'COST1'
+/*            }, { 
+                text     : '현황',
+                width    : 60,
+                sortable : true,
+                renderer : renderNormal,
+                align    : 'right',
+                dataIndex: 'COST2' */
+            }, { 
+                text     : '차이',
+                width    : 50,
+                sortable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'COST3'
+/*            }, {
+                text     : '',
+                width    : 22,
+                sortable : true,
+                renderer : renderNormal,
+                align    : 'center',
+                dataIndex: 'COST4' */  
+            }]
+        },
+        {
+            text: '편성중량 (톤)',
+            columns: [{
+                text     : '목표',
+                width    : 65,
+                sortable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'WEIGHT1'
+            }, { 
+/*                text     : '현황',
+                width    : 60,
+                sortable : true,
+                renderer : renderNormal,
+                align    : 'right',
+                dataIndex: 'WEIGHT2'
+            }, { */
+                text     : '차이',
+                width    : 50,
+                sortable : true,
+                renderer : renderNormal,
+                style: 'text-align:center; padding-left:12px',
+                align    : 'right',
+                dataIndex: 'WEIGHT3'
+/*            }, {
+                text     : '',
+                width    : 22,
+                sortable : true,
+                renderer : renderNormal,
+                align    : 'center',
+                dataIndex: 'WEIGHT4'  */
+            }
+            ]
+        }
+        ],
+        height:452,
+        viewConfig: {
+            stripeRows: true
+        }
+    });
+
+grid.on( 'rowdblclick', function( target, record, tr, rowIndex, e, opts ){
+    var projectcode = record.data.PrjCode;
+    var object_id = record.data.Object_Id;
+    this.location = URL_DETAIL + "&PRJCODE=" + projectcode + "&ObjectId=" + object_id;;
+}, self );
+
+function clickFirst(){
+    try{
+        var projectcode = grid.store.getAt(0).data.PrjCode;
+        var object_id = grid.store.getAt(0).data.Object_Id;
+        this.location = URL_DETAIL + "&PRJCODE=" + projectcode + "&ObjectId=" + object_id;
+    }
+    catch(e){
+        alert( 'Please Double Click Project' );
+    }
+}
+
+Ext.onReady(function(){
+isTouchTheme = Ext.themeName === 'crisp-touch';
+
+    var prjpanel0 = new Ext.Panel( {
+        title: '1. 프로젝트 개요',
+        border:false,
+        frame: false,
+        header : false,
+        items:[
+				{ baseCls: 'x-plain', id: '', layout:'column', width:'100%', items:[
+				{ baseCls: 'x-plain', id: 'IDX00_01' , columnWidth:1, layout:'form', html: getCol00_01() } //,
+                //{ baseCls: 'x-plain', id: 'IDX00_02' , columnWidth:.3, layout:'form', html: getCol00_02() } 
+        ] } ]
+    });
+
+    var prjpanel1 = new Ext.Panel( {
+        title: TITLE,
+        animCollapse: true,
+        header : false,
+        border:false,
+        frame: false,
+        bodyPadding: 5,
+        anchor:'100% 25%',
+        items:[
+				{ baseCls: 'x-plain', id: '', layout:'column', width:'100%', items:[
+				{ baseCls: 'x-plain', id: 'IDX01_01' , columnWidth:1, layout:'form', html: getCol01_01() }
+        //        { baseCls: 'x-plain', id: 'IDX01_02' , columnWidth:.3, layout:'form', html: getCol01_02() }
+        ] } ]
+    });
+    var prjpanel2 = new Ext.Panel( {
+        animCollapse: true,
+        border:false,
+        frame: false,
+        bodyPadding: 5,
+        anchor:'100% 50%'
+    });
+    prjpanel2.add( grid );
+
+    var prjpanel3 = new Ext.Panel( {
+        animCollapse: true,
+        border:false,
+        frame: false,
+        bodyPadding: 5,
+        anchor:'100% 1%',
+        html: "<span class=note style='font-size:11px'> &nbsp; ※ 진도율 : 현재일 기준 누계 계획율 대 실적율에 대한 비율</span>"
+    });
+    
+
+    var anchor = new Ext.Viewport( {
+    //    layout:'anchor',
+	    
+        items: [prjpanel0, prjpanel1, prjpanel2, prjpanel3 ] 
+    });
+
+    var toolbar = Ext.widget({
+                xtype: 'toolbar',
+                border: true, rtl: false, id: 'options-toolbar',
+                floating: true, fixed: true, preventFocusOnActivate: true,
+                draggable: { constrain: true },
+                items: [
+                    { xtype: 'label', html: '<img src=/enovia/common/images/icon_next.gif height=25 width=25 />', listeners: {    render: function(c){ c.getEl().on('click', function(){ clickFirst(); }, c); } } } 
+                ],
+                constraintInsets: '0 -' + (Ext.getScrollbarSize().width + 5) + ' 0 0'
+            });
+            toolbar.show();
+            toolbar.anchorTo(
+                document.body,
+                Ext.optionsToolbarAlign || 'tr-tr',
+                [-(Ext.getScrollbarSize().width - 20), 0],
+                false,                                  
+                true                                    
+            );
+});
+</script>
+
+
+<style type="text/css">
+ 
+.rept{
+    margin-bottom:10px;
+}
+.x-form-layout-wrap
+{
+        border-spacing: 0px;
+}
+
+.x-grid-cell-inner
+{
+        padding-bottom : 7px;
+        padding-top : 8px;
+}
+
+DIV.TITLE{
+
+padding-top : 25px;
+}
+</style>
+    <body style="width:100%">
+    </body>
+</html>
